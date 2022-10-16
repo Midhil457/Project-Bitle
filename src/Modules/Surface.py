@@ -5,15 +5,19 @@ from PySide2.QtCore import Qt, QRect
 
 
 class Surface(QGraphicsPixmapItem):
-    def __init__(self, w: int, h: int, format, *args):
+    def __init__(self, w: int, h: int, format, Image=0, *args):
         super().__init__(*args)
         #Init Image
-        self.Image = QImage(w, h, format)
+        self.Image = Image or QImage(w, h, format)
         self.Image.fill(Qt.transparent)
         self.Painter = QPainter(self.Image)
         
         self.setPixmap(QPixmap().fromImage(self.Image))
     
+    def getWidth(self):
+        return self.Image.width()
+    def getHeight(self):
+        return self.Image.height()
     def getPainter(self):
         return self.Painter
 
