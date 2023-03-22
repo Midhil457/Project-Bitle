@@ -11,7 +11,8 @@ class Surface(QGraphicsPixmapItem):
         self.Image = Image or QImage(w, h, format)
         self.Image.fill(Qt.transparent)
         self.Painter = QPainter(self.Image)
-        
+        self.Brush = QBrush(QColor(0,0,0,255))
+        self.Pen = QPen(QColor(0,0,0,255))
         self.setPixmap(QPixmap().fromImage(self.Image))
     
     def getWidth(self):
@@ -23,6 +24,8 @@ class Surface(QGraphicsPixmapItem):
 
     def getImage(self):
         return self.Image
+    def getPixel(self,x,y):
+        return self.Image.pixel(x,y)
     
     def erase(self, x: int, y: int, r: int):
         #Todo: Erase an region
@@ -74,13 +77,67 @@ class Surface(QGraphicsPixmapItem):
         self.Painter.drawImage(0,0,Image)
         self.setPixmap(QPixmap().fromImage(self.Image))
     
+    def fill(self, brush: QBrush):
+        print(self.Image.rect())
+        self.Painter.fillRect(self.Image.rect(),brush)
+        self.setPixmap(QPixmap().fromImage(self.Image))
+    
+    def floodfill(self, startX, startY):
+        if self.validateCord(startX, startY):
+            SearchColor = self.Image.pixelColor(startX, startY)
+            queue = [(startX, startY)]
+            if SearchColor != self.Brush.color():
+                while queue != []:
+                    queue = self.searchNeighbor(queue, SearchColor)
+            
+                
+    def validateCord(self,x,y):
+
+        if x in range(self.Image.width()) and y in range(self.Image.height()):
+            return True
+        else:
+            return False
+        
+    
+    def getNeighbors(self, x, y, validate):
+        neighbors = [(x+1,y),(x-1,y),(x,y+1),(x,y-1)] 
+        if validate:
+            for index,neighbor in enumerate(neighbors):
+                if self.validateCord(neighbor[0], neighbor[1]) == False:
+                    neighbors.pop(index)
+             
+        return neighbors
+        
+
+
+    
     def clear(self):
         self.Image.fill(Qt.transparent)
         self.setPixmap(QPixmap().fromImage(self.Image))
 
     def setPen(self, pen: QPen):
-        self.Painter.setPen(pen)
-        print("Pen set")
-    
+        self.Pen = pen
+        self.Painter.setPen(self.Pen)
+        
     def setBrush(self, brush: QBrush):
+        self.Brush = brush
         self.Painter.setBrush(brush)
+    
+    def setBrushColor(self, color: QColor):
+        self.Brush.setColor(color)
+    
+    def setPenColor(self, color: QColor):
+        self.Pen.setColor(color)
+        self.Painter.setPen(self.Pen)
+        
+        
+
+    def searchNeighbor(self,pixels,TargetColor):
+        Neighbors = []
+        for pixel in pixels:
+            if self.validateCord(pixel[0],pixel[1]):
+                for neighbor in self.getNeighbors(pixel[0],pixel[1],True):
+                    if self.Image.pixelColor(neighbor[0],neighbor[1]) == TargetColor:
+                        Neighbors.append((neighbor[0],neighbor[1]))
+                        self.drawPoint(neighbor[0],neighbor[1])
+        return Neighbors
